@@ -11,20 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Get source code
+        uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Find Flutter project
+        shell: bash
         run: |
-          PROJECT_DIR=$(find . -name pubspec.yaml -not -path '*/.dart_tool/*' -print -quit | xargs dirname)
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "ERROR: pubspec.yaml not found. Upload extracted project files."
+          FILE=$(find . -name pubspec.yaml -not -path '*/.dart_tool/*' -print -quit)
+          if [ -z "$FILE" ]; then
+            echo "pubspec.yaml not found"
             exit 1
           fi
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          PROJECT_DIR=$(dirname "$FILE")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Generate Android files
+        run: |
+          cd "$PROJECT_DIR"
+          flutter create --platforms=android .
 
       - name: Build APK
         run: |
